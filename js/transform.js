@@ -38,7 +38,9 @@ function cssTransform(el,attr,val) {
 	}
 }
 /*
-wrapper:是包裹滚动元素的直接父级元素
+wrapper:是包裹滚动元素的直接父级元素,
+scroll_axies:代表滚动元素的滚动方向，'X'为水平方向，'Y'为竖直方向
+speed：控制手指移开时做的惯性运动的速度
 callback_obj_obj中相应属性的意思
 	touchstart 手指按下的回调函数
 	moving 滑动中的回调函数
@@ -47,7 +49,7 @@ callback_obj_obj中相应属性的意思
 
 注意，若想随时清掉滚动元素的动画效果，可以clearInterval(scrolled_elem.scrolltimer)
 */
-function customScrollElemVer3(wrapper, scroll_axes, callback_obj) {
+function customScrollElemVer3(wrapper, scroll_axes, speed, callback_obj) {
 	"use strict";
 	var scrolled_elem = wrapper.children[0];
 	var i_last_scrollend_trans_val = 0,
