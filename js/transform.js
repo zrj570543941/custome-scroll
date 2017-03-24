@@ -49,8 +49,28 @@ callback_obj_obj中相应属性的意思
 
 注意，若想随时清掉滚动元素的动画效果，可以clearInterval(scrolled_elem.scrolltimer)
 */
-function customScrollElemVer3(wrapper, scroll_axes, speed, callback_obj) {
-	"use strict";
+function extend(defaults, configs) {
+	for (var attr in configs) {
+		defaults[attr] = configs[attr];
+	}
+	return defaults;
+}
+
+function ScrolledElem (configs) {
+	var _contextOfScrolledElem = this;
+
+	_contextOfScrolledElem.defaults = {
+		speed: 1000
+	};
+	_contextOfScrolledElem.handlers = {};
+	extend(_contextOfScrolledElem.defaults, configs);
+	//配置参数的赋值
+	var scroll_axes = _contextOfScrolledElem.defaults.scroll_axes,
+		wrapper = _contextOfScrolledElem.defaults.wrapper,
+		speed = _contextOfScrolledElem.defaults.speed
+	;
+
+
 	var scrolled_elem = wrapper.children[0];
 	var i_last_scrollend_trans_val = 0,
 		i_start_scroll_trans_val = 0,
@@ -155,9 +175,9 @@ function customScrollElemVer3(wrapper, scroll_axes, speed, callback_obj) {
 			i_critical_point_hand_pos = i_start_scroll_hand_pos;
 		}
 
-		if(callback_obj&&callback_obj.touchstart){
-			callback_obj.touchstart();
-		}
+		
+
+		_contextOfScrolledElem.fire({type: "touchstart"});
 
 	});
 	// 随着手指的移动滑动元素也随之移动
@@ -177,9 +197,9 @@ function customScrollElemVer3(wrapper, scroll_axes, speed, callback_obj) {
 		i_prevprev_touchmove_trans_val = i_prev_touchmove_trans_val;
 		cssTransform(scrolled_elem, changing_attr, i_cur_touch_move_trans_val);		
 
-		if(callback_obj&&callback_obj.moving){
-			callback_obj.moving();
-		}
+		
+
+		_contextOfScrolledElem.fire({type: "moving"});
 	});
 
 
@@ -251,7 +271,7 @@ function customScrollElemVer3(wrapper, scroll_axes, speed, callback_obj) {
 			i_speed_bet_startscroll_and_scrollmoveend = i_dis_bet_startscroll_and_scrollmoveend / i_dis_time_bet_startscroll_and_scrollmoveend;//表示touchmove时元素滚动的平均速度,可能为负数
 
 			// 计算做惯性运动需要的距离和时间(在惯性运动结束时并未超过临界值时的情况)
-			i_inertia_move_dis = i_speed_bet_startscroll_and_scrollmoveend * 1000,
+			i_inertia_move_dis = i_speed_bet_startscroll_and_scrollmoveend * _contextOfScrolledElem.defaults.speed,
 			i_inertia_move_time = Math.abs(i_speed_bet_startscroll_and_scrollmoveend)  * 500,
 			i_inertia_move_end_trans_val = i_start_inertia_move_trans_val + i_inertia_move_dis;
 			animation_type = "easeOut";
@@ -279,9 +299,8 @@ function customScrollElemVer3(wrapper, scroll_axes, speed, callback_obj) {
 		});
 
 
-		if(callback_obj&&callback_obj.touchend){
-			callback_obj.touchend();
-		}
+
+		_contextOfScrolledElem.fire({type: "touchend"});
 	});
 
 
@@ -323,17 +342,54 @@ function customScrollElemVer3(wrapper, scroll_axes, speed, callback_obj) {
 				clearInterval(scrolled_elem.scrolltimer);
 				i_trans_val_when_inertia_moving = e;
 				cssTransform(scrolled_elem, changing_attr, i_trans_val_when_inertia_moving, e);
-				if(callback_obj&&callback_obj.moveover){
-					callback_obj.moveover();
-				}
+				
+
+				_contextOfScrolledElem.fire({type: "moveover"});
 			} else {
 				//transformFromInertiaToFrictionMove();
 				i_trans_val_when_inertia_moving = Tween[animation_type](i_dis_time, b, c, d);
 				cssTransform(scrolled_elem, changing_attr, i_trans_val_when_inertia_moving);
-				if(callback_obj&&callback_obj.moving){
-					callback_obj.moving();
-				}
+
+				_contextOfScrolledElem.fire({type: "moving"});
 			}	
 		}, 10);		
-	}
+	}	
 }
+
+ScrolledElem.prototype = {
+	constructor: ScrolledElem,
+	addHandler: function(type, handler) {
+		if (!this.handlers[type]) {
+			this.handlers[type] = [];
+		}
+		this.handlers[type].push(handler);
+		//连缀语法的实现
+		return this;
+	},
+	fire: function(event) {
+		if (!event.target) {
+			event.target = this;
+		}
+		var handlers = this.handlers[event.type];
+		if (handlers instanceof Array) {
+			for (var i = 0, len = handlers.length; i < len; i++) {
+				handlers[i](event);
+			}
+		}
+		//连缀语法的实现
+		return this;
+	},
+	removeHandler: function(type, handler) {
+		var handlers = this.handlers[type];
+		if (handlers instanceof Array) {
+			for (var i = 0, len = handlers.length; i < len; i++) {
+				if (handlers[i] === handler) {
+					handlers.splice(i, 1);
+					break;
+				}
+			}
+		}
+		//连缀语法的实现
+		return this;
+	}
+};	

@@ -95,7 +95,17 @@ body {
 		window.onload = function() {
 			var doc = document;
 			var wrapper = doc.querySelector('#wrap');
-			customScrollElemVer3(wrapper, "Y", 100);
+			// customScrollElemVer3(wrapper, "Y", 100);
+
+			var scrolled_elem = new ScrolledElem({
+				wrapper: wrapper,
+				speed: 1000,
+				scroll_axes: "Y"
+			});
+
+			scrolled_elem.addHandler("touchstart", function () {
+				console.log('test');
+			})
 		};
 	</script>
 </body>
